@@ -1,0 +1,16 @@
+name: embodied-ai
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - networkx
+  - pyyaml
+  - pytest
+  - jupyter

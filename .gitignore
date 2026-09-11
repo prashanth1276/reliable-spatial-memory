@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Conda/local environments
+.conda/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Datasets
+data/raw/
+data/interim/
+data/processed/
+
+# Model checkpoints / weights
+checkpoints/
+weights/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Experiment outputs
+outputs/
+runs/
+wandb/
+
+# Temporary files
+tmp/
+temp/
+
+# Local configuration
+config.local.yaml
+config.local.yml
