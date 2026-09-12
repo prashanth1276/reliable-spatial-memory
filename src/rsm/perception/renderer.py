@@ -92,3 +92,57 @@ def _draw_circle(img, cx, cy, r, color):
         for xx in range(x0, x1):
             if (xx - cx) ** 2 + (yy - cy) ** 2 <= r * r:
                 img[yy, xx] = color
+
+def render_sketch(env: GridWorld, include_noise: bool = True) -> np.ndarray:
+    """
+    Render in a more detector-friendly style: larger objects, textured
+    backgrounds, distinct borders. Used with MobileNet-SSD which expects
+    real-world-ish images.
+    """
+    scene = env.scene
+    H = scene.height * PPC
+    W = scene.width * PPC
+
+    # Start with a slightly noisy floor
+    img = np.zeros((H, W, 3), dtype=np.uint8)
+    for cx in range(scene.width):
+        for cy in range(scene.height):
+            room = scene.room_at(cx, cy)
+            base = (200, 195, 185) if room == "kitchen" else (215, 200, 175)
+            y0 = (scene.height - 1 - cy) * PPC
+            x0 = cx * PPC
+            tile = np.random.normal(0, 6, (PPC, PPC, 3)) + base
+            img[y0:y0 + PPC, x0:x0 + PPC] = np.clip(tile, 0, 255).astype(np.uint8)
+
+    # Draw visible objects as filled rounded rectangles with texture
+    obs = env.observe()
+    visible = sorted(
+        obs.visible_objects,
+        key=lambda o: 0 if o["type"] in _RECEPTACLE_TYPES else 1,
+    )
+
+    for o in visible:
+        obj_type = o["type"]
+        color = OBJECT_COLORS.get(obj_type)
+        if color is None:
+            continue
+
+        px = o["x"] * PPC + PPC // 2
+        py = (scene.height - 1 - o["y"]) * PPC + PPC // 2
+
+        if obj_type in _RECEPTACLE_TYPES:
+            r = PPC - 2
+        else:
+            r = 8
+
+        # Draw a filled box with slight gradient / texture
+        y0, y1 = max(0, py - r), min(H, py + r)
+        x0, x1 = max(0, px - r), min(W, px + r)
+        patch = np.random.normal(0, 5, (y1 - y0, x1 - x0, 3)) + color
+        img[y0:y1, x0:x1] = np.clip(patch, 0, 255).astype(np.uint8)
+
+    if include_noise:
+        noise = np.random.normal(0, NOISE_SIGMA, img.shape)
+        img = np.clip(img.astype(float) + noise, 0, 255).astype(np.uint8)
+
+    return img

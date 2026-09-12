@@ -77,3 +77,7 @@ results/checkpoints/
 # ---------- Misc ----------
 *.log
 .cache/
+
+models/*.caffemodel
+models/*.prototxt
+results/tables/correlated_results.csv

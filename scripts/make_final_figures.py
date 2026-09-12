@@ -151,12 +151,58 @@ def fig_ablation(rows):
     print(f"Saved: {out}")
 
 
+def fig_correlated(rows):
+    """Task success vs. correlation strength, one line per policy."""
+    scenarios = ["moved", "disappeared", "noisy", "multi_change"]
+    policies = ["trust_memory", "trust_observation", "gated_observation",
+                "verify_no_reobserve", "verify"]
+    colors = {
+        "trust_memory":       "#d9534f",
+        "trust_observation":  "#f0ad4e",
+        "gated_observation":  "#5bc0de",
+        "verify_no_reobserve":"#8e6cbf",
+        "verify":             "#5cb85c",
+    }
+    corr_levels = sorted({float(r["correlation"]) for r in rows})
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    axes = axes.flatten()
+    for ax, sc in zip(axes, scenarios):
+        for pol in policies:
+            ys = []
+            for cl in corr_levels:
+                vals = [int(r["task_success"]) for r in rows
+                        if r["policy"] == pol and r["scenario"] == sc
+                        and float(r["correlation"]) == cl]
+                ys.append(sum(vals) / len(vals) if vals else 0.0)
+            ax.plot(corr_levels, ys, marker="o", label=pol, color=colors[pol])
+        ax.set_title(sc)
+        ax.set_xlabel("Correlation strength")
+        ax.set_ylabel("Task success")
+        ax.set_ylim(-0.05, 1.05)
+        ax.grid(alpha=0.3)
+    axes[0].legend(fontsize=8, loc="lower left")
+    plt.suptitle("Task success vs. temporal correlation of perception noise",
+                 fontsize=14)
+    plt.tight_layout()
+    plt.savefig("results/figures/correlated_sensitivity.png", dpi=150)
+    plt.close()
+    print("Saved: results/figures/correlated_sensitivity.png")
+
+
 def main():
     os.makedirs(FIG_DIR, exist_ok=True)
     rows = load()
     fig_sensitivity(rows)
     fig_summary_bars(rows)
     fig_ablation(rows)
+    
+    # Correlated noise figure
+    corr_csv = "results/tables/correlated_results.csv"
+    if os.path.exists(corr_csv):
+        with open(corr_csv) as f:
+            corr_rows = list(csv.DictReader(f))
+        fig_correlated(corr_rows)
 
 
 if __name__ == "__main__":
