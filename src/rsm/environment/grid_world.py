@@ -51,7 +51,7 @@ class GridWorld:
     def __init__(
         self,
         scene: Optional[Scene] = None,
-        view_radius: int = 6,
+        view_radius: int = 8,
         fov_degrees: int = 120,
         start_x: int = 1,
         start_y: int = 1,

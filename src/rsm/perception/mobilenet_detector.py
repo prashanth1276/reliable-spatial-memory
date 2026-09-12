@@ -62,9 +62,11 @@ class MobileNetDetector:
         H, W = img.shape[:2]
 
         # MobileNet-SSD expects 300x300 input with mean 127.5, scale 1/127.5
+        # Our renderer returns RGB; OpenCV's Caffe pipeline expects BGR.
         blob = cv2.dnn.blobFromImage(
             img, scalefactor=1.0 / 127.5,
             size=(300, 300), mean=(127.5, 127.5, 127.5),
+            swapRB=True,
         )
         self.net.setInput(blob)
         detections = self.net.forward()

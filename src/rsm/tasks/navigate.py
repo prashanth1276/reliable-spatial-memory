@@ -30,18 +30,10 @@ def run_navigate_task(
     reobs = 0
     conflicts = 0
 
-    # ---------------- Phase 1: observe before navigating ----------------
-    obs_loc_id = scenario.ground_truth_location
-    if scenario.scenario_type == ScenarioType.DISAPPEARED:
-        obs_loc_id = memory.get_location_of(target_id) or "table_1"
-
-    obs_loc = env.get_object(obs_loc_id) if obs_loc_id else None
-    if obs_loc is not None:
-        env.agent.x = max(0, int(obs_loc.x) - 2)
-        env.agent.y = int(obs_loc.y)
-        env.agent.facing = 1
-    else:
-        env.agent.x, env.agent.y, env.agent.facing = 1, 1, 1
+    # ---------------- Phase 1: enter scene from a FIXED position ----------------
+    # The agent always starts at the kitchen entrance. It does not know
+    # where the target is. It observes from here, then navigates using memory.
+    env.agent.x, env.agent.y, env.agent.facing = 3, 5, 1
 
     obs = env.observe()
     frame = frame_builder(obs, memory.step + 1, noise, location_ids)

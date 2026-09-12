@@ -9,11 +9,14 @@ class ObjectNode:
     object_id: str
     object_type: str
     attributes: Dict = field(default_factory=dict)
+    # ACTIVE — believed present, high confidence
+    # UNCERTAIN — evidence is mixed
+    # DISAPPEARED — strong evidence of absence
+    state: str = "ACTIVE"
 
 
 @dataclass
 class LocationNode:
-    """A receptacle or furniture piece (table, counter, fridge)."""
     location_id: str
     location_type: str
     room: Optional[str] = None

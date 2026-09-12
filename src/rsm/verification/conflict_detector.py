@@ -1,10 +1,7 @@
-"""Detect when a new observation disagrees with stored memory.
-
-Now uses the observation's own confidence to weight evidence.
-"""
+"""Detect when a new observation disagrees with stored memory."""
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from ..memory.spatial_graph import SpatialGraph
 from ..perception.observation import Frame
@@ -23,18 +20,22 @@ class Conflict:
 def detect_conflicts(
     graph: SpatialGraph,
     frame: Frame,
-    min_memory_confidence: float = 0.5,
     miss_rate: float = 0.12,
+    min_memory_confidence: float = 0.5,
 ) -> List[Conflict]:
     """
     Compare current observation against stored memory.
-    `miss_rate` is used to compute the confidence of a "disappeared" claim
-    (higher miss rate → less sure that absence is real).
+
+    Absence confidence:
+      We can only claim absence when the object's REMEMBERED LOCATION is
+      visible but the object itself is not. That gives moderate confidence
+      (0.55) — not certain, but stronger than nothing. Verification via
+      re-observation is what pushes absence to certainty.
     """
     conflicts: List[Conflict] = []
 
-    observed_parent = {}
-    observed_conf = {}
+    observed_parent: Dict[str, str] = {}
+    observed_conf: Dict[str, float] = {}
     visible_ids = set()
     for o in frame.objects:
         if not o.visible:
@@ -53,7 +54,6 @@ def detect_conflicts(
         mem_conf = mem_rel.confidence if mem_rel else 0.0
         if mem_conf < min_memory_confidence:
             continue
-
         conflicts.append(Conflict(
             object_id=obj_id,
             memory_location=mem_loc,
@@ -64,8 +64,7 @@ def detect_conflicts(
         ))
 
     # ---- DISAPPEARED ----
-    # Confidence of "really gone" ≈ 1 - miss_rate.
-    absence_conf = max(0.3, 1.0 - miss_rate)
+    # Only fires when the remembered location IS visible but the object isn't.
     for obj_id in graph.objects:
         if obj_id in visible_ids:
             continue
@@ -76,13 +75,14 @@ def detect_conflicts(
         mem_conf = mem_rel.confidence if mem_rel else 0.0
         if mem_conf < min_memory_confidence:
             continue
-
+        # Moderate absence confidence — enough to trigger verification,
+        # not enough to immediately overwrite memory.
         conflicts.append(Conflict(
             object_id=obj_id,
             memory_location=mem_loc,
             observed_location=None,
             memory_confidence=mem_conf,
-            observed_confidence=absence_conf,
+            observed_confidence=0.55,
             kind="disappeared",
         ))
 

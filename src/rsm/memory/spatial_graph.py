@@ -24,6 +24,9 @@ class SpatialGraph:
 
     def get_location_of(self, object_id: str) -> Optional[str]:
         """Where does this object currently live, per memory?"""
+        node = self.objects.get(object_id)
+        if node is not None and node.state == "DISAPPEARED":
+            return None
         rels = [r for r in self.get_relations(object_id)
                 if r.relation == "on" and r.status != "UNCERTAIN"]
         if not rels:
@@ -38,6 +41,11 @@ class SpatialGraph:
     # ---------------- updates ----------------
     def add_object(self, node: ObjectNode) -> None:
         self.objects[node.object_id] = node
+
+    def set_object_state(self, object_id: str, state: str) -> None:
+        """Set an object's state: ACTIVE | UNCERTAIN | DISAPPEARED."""
+        if object_id in self.objects:
+            self.objects[object_id].state = state
 
     def add_location(self, node: LocationNode) -> None:
         self.locations[node.location_id] = node

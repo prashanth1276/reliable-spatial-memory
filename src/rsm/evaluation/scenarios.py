@@ -42,14 +42,14 @@ def setup_noisy(env: GridWorld) -> Scenario:
 
 def setup_multi_change(env: GridWorld) -> Scenario:
     c = env.get_object("counter_1")
-    s = env.get_object("sofa_1")
+    f = env.get_object("fridge_1")
     env.move_object("mug_1", c.x, c.y, parent_id="counter_1")
-    env.move_object("apple_1", s.x, s.y, parent_id="sofa_1")
+    env.move_object("apple_1", f.x, f.y, parent_id="fridge_1")
     return Scenario(
         ScenarioType.MULTI_CHANGE,
         "mug_1", "counter_1",
         secondary_object_id="apple_1",
-        secondary_ground_truth="sofa_1",
+        secondary_ground_truth="fridge_1",
     )
 
 

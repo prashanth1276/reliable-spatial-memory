@@ -67,27 +67,33 @@ def apply_decision(
     c = result.conflict
 
     if result.decision == Decision.ACCEPT_NEW:
-        # Demote the old relation
+        # Demote old relation
         for r in graph.get_relations(c.object_id):
             if r.relation == "on" and r.object_id == c.memory_location:
                 r.status = "UNCERTAIN"
                 r.confidence *= 0.3
-        # Add/reinforce the new relation
+
         if c.observed_location:
+            # Object moved to a new surface
             graph.upsert_relation(
                 c.object_id, "on", c.observed_location, 0.9, step,
             )
+            graph.set_object_state(c.object_id, "ACTIVE")
+        else:
+            # Disappearance accepted
+            graph.set_object_state(c.object_id, "DISAPPEARED")
 
     elif result.decision == Decision.KEEP_OLD:
-        # Reinforce the old relation slightly, ignore the new one
         for r in graph.get_relations(c.object_id):
             if r.relation == "on" and r.object_id == c.memory_location:
                 r.confidence = min(1.0, r.confidence + 0.05)
+        graph.set_object_state(c.object_id, "ACTIVE")
 
     elif result.decision == Decision.MARK_UNCERTAIN:
         for r in graph.get_relations(c.object_id):
             if r.relation == "on" and r.object_id == c.memory_location:
                 r.status = "NEEDS_VERIFICATION"
                 r.confidence *= 0.6
+        graph.set_object_state(c.object_id, "UNCERTAIN")
 
     # RE_OBSERVE is handled by the caller (the agent loop).
