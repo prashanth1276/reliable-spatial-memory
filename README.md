@@ -174,7 +174,7 @@ spatial-memory-agent/
 │
 ├── models/
 │   ├── README.md
-│   ├── MobileNetSSD_deploy.prototxt
+│   ├── MobileNetSSD_deploy.prototxt       # gitignored
 │   └── mobilenet_iter_73000.caffemodel    # gitignored (~23 MB)
 │
 ├── results/
@@ -217,6 +217,7 @@ spatial-memory-agent/
     ├── __init__.py
     └── test_memory.py
 ```
+
 ---
 
 ## Reproducing
