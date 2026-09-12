@@ -1,62 +1,79 @@
-# Python
+# ---------- Python ----------
 __pycache__/
 *.py[cod]
-*.pyo
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Virtual environments
-.venv/
-venv/
+# ---------- Virtual environments ----------
+.env
+.venv
 env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+spatial/
+rsm-env/
 
-# Conda/local environments
-.conda/
+# ---------- Testing / coverage ----------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
 
-# Jupyter
+# ---------- Jupyter ----------
 .ipynb_checkpoints/
 
-# IDE
+# ---------- Editor / IDE ----------
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS
+# ---------- OS ----------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Python packaging
-build/
-dist/
-*.egg-info/
+# ---------- Project-specific generated files ----------
+# Keep the aggregated tables and figures that appear in the README,
+# but ignore the raw per-run CSV and transient memory files.
+data/*.json
+results/tables/main_results.csv
+results/tables/noisy_results.csv
+results/tables/main_experiment.csv
+results/checkpoints/
 
-# Logs
-logs/
+# Keep these generated files tracked (used by README):
+!results/tables/main_experiment.md
+!results/tables/main_results.md
+!results/tables/noisy_results.md
+!results/figures/*.png
+
+# ---------- Misc ----------
 *.log
-
-# Environment variables / secrets
-.env
-.env.*
-
-# Datasets
-data/raw/
-data/interim/
-data/processed/
-
-# Model checkpoints / weights
-checkpoints/
-weights/
-*.pt
-*.pth
-*.ckpt
-*.safetensors
-
-# Experiment outputs
-outputs/
-runs/
-wandb/
-
-# Temporary files
-tmp/
-temp/
-
-# Local configuration
-config.local.yaml
-config.local.yml
+.cache/
