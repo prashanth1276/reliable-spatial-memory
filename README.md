@@ -1,5 +1,9 @@
 # Reliable Spatial Memory for a Language-Grounded Embodied Agent
 
+**Core contribution:** a verification layer for reliable spatial memory under
+noisy and changing observations. **Extension:** language-grounded navigation
+via CLIP.
+
 An embodied agent that explores a simulated indoor environment, builds a persistent confidence-weighted spatial memory of objects and their relationships, and uses that memory to navigate to goal objects. When the environment changes or perception is noisy, the agent detects the conflict between memory and observation, gathers additional evidence, and only then updates its belief.
 
 ![Sensitivity](results/figures/sensitivity.png)
@@ -43,8 +47,12 @@ All three produce `Frame` objects consumed by an identical memory and verificati
 
 ## Experiment
 
-**5 policies × 4 scenarios × 4 noise levels × 50 seeds = 4000 runs** (main).
-**5 policies × 4 scenarios × 4 correlation strengths × 30 seeds = 2400 runs** (correlated).
+**Core evaluation: 6,400 runs across two noise models.**
+
+- **Main:** 5 policies × 4 scenarios × 4 noise levels × 50 seeds = 4,000 runs
+- **Correlated:** 5 policies × 4 scenarios × 4 correlation strengths × 30 seeds = 2,400 runs
+
+**Extension: 1,320 additional runs** for the language-grounding ablation.
 
 ### Policies
 
@@ -98,14 +106,12 @@ For every run:
    Across all four scenarios, `verify` is never beaten by any baseline: it wins on `moved` (0.84 vs 0.60), `noisy` (1.00 vs 0.48), and `multi_change` (0.76 vs 0.60), and ties the best ablation on `disappeared` (0.76).
 
 3. **The cost is bounded.**
-   Verification uses ~4–6 additional observations per episode — a small, bounded overhead for protection against false observations.
+   Verification uses ~6–10 additional observations per episode — a small, bounded overhead for protection against false observations.
 
 4. **The gain comes from re-observation.**
    Removing it (`verify_no_reobserve`) drops performance on the noisy scenario from 1.00 to 0.48 — matching the naive baseline. Conflict detection alone is insufficient; evidence accumulation is what works.
 
 ### Sensitivity
-
-![Sensitivity](results/figures/sensitivity.png)
 
 At low noise, policies converge. As noise increases, `verify` pulls ahead on the noisy scenario while remaining competitive elsewhere.
 
@@ -148,7 +154,11 @@ Results at correlation strength 0.9:
 
 ---
 
-### Language Grounding
+### Extension: Language-Grounded Navigation
+
+This extension applies the memory and verification architecture to natural-language
+command execution. It is presented as a demonstration of generality rather than
+a validation of the main verification hypothesis.
 
 A language layer extends the agent with natural-language command execution
 (`src/rsm/language/`). Commands like *"go to the red mug"* are parsed with
@@ -294,7 +304,7 @@ pip install -r requirements.txt
 ### Run everything in order
 
 ```bash
-# ---- Project 1: spatial memory ----
+# ---- Core evaluation: spatial memory ----
 # 1. Sanity check the environment
 python scripts/run_demo.py
 
@@ -319,7 +329,7 @@ python scripts/run_correlated_experiment.py
 # 8. Regenerate all main figures
 python scripts/make_final_figures.py
 
-# ---- Project 2: language grounding ----
+# ---- Extension: language-grounded navigation ----
 # 9. Single-command demo (first run downloads CLIP)
 python scripts/run_language_demo.py
 
@@ -374,6 +384,11 @@ CLIP model (~150 MB) and spaCy model (~13 MB) to local caches.
   rarely in the language task, where the agent observes short, localized
   scenes. This is documented as a limitation and motivates adaptive
   verification in future work.
+- **Ground-truth navigation coordinates.** The experiment evaluates whether
+  memory selects the correct target location, but the navigator obtains the
+  coordinates of that selected location from the simulated environment
+  rather than from a fully memorized geometric representation. Extending
+  memory to store location coordinates is future work.
 
 These constraints are deliberate — the goal is to isolate the memory-reliability problem, not to build a complete embodied AI system.
 
