@@ -60,24 +60,25 @@ Thumbs.db
 desktop.ini
 
 # ---------- Project-specific generated files ----------
-# Keep the aggregated tables and figures that appear in the README,
-# but ignore the raw per-run CSV and transient memory files.
+# Ignore raw per-run CSVs and transient memory snapshots.
 data/*.json
-results/tables/main_results.csv
-results/tables/noisy_results.csv
 results/tables/main_experiment.csv
+results/tables/correlated_results.csv
+results/tables/language_results.csv
 results/checkpoints/
 
-# Keep these generated files tracked (used by README):
+# Keep the aggregated tables (used by README).
 !results/tables/main_experiment.md
-!results/tables/main_results.md
-!results/tables/noisy_results.md
+!results/tables/correlated_results.md
+!results/tables/language_results.md
+
+# Keep the figures referenced in the README.
 !results/figures/*.png
+
+# ---------- Model weights (large, downloaded separately) ----------
+models/*.caffemodel
+models/*.prototxt
 
 # ---------- Misc ----------
 *.log
 .cache/
-
-models/*.caffemodel
-models/*.prototxt
-results/tables/correlated_results.csv

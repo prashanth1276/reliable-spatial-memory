@@ -88,4 +88,7 @@ def default_house() -> Scene:
     add("tv_1",           "TV",          17, 6, receptacle=True)
     add("coffee_table_1", "CoffeeTable", 15, 6, receptacle=True)
 
+    # ---- Second Mug (red) on the fridge — for language disambiguation ----
+    add("mug_2", "RedMug", 9, 10, parent="fridge_1")
+
     return scene

@@ -1,4 +1,4 @@
-# Reliable Spatial Memory for an Embodied Agent
+# Reliable Spatial Memory for a Language-Grounded Embodied Agent
 
 An embodied agent that explores a simulated indoor environment, builds a persistent confidence-weighted spatial memory of objects and their relationships, and uses that memory to navigate to goal objects. When the environment changes or perception is noisy, the agent detects the conflict between memory and observation, gathers additional evidence, and only then updates its belief.
 
@@ -84,10 +84,10 @@ For every run:
 | Policy | moved | disappeared | noisy | multi_change |
 |---|---|---|---|---|
 | trust_memory | 0.00 | 0.00 | 1.00 | 0.00 |
-| trust_observation | 0.62 | 0.72 | 0.34 | 0.62 |
-| gated_observation | 0.52 | 0.00 | 0.32 | 0.52 |
-| verify_no_reobserve | 0.48 | 0.76 | 0.48 | 0.48 |
-| **verify** | **0.78** | **0.76** | **1.00** | **0.78** |
+| trust_observation | 0.60 | 0.72 | 0.34 | 0.60 |
+| gated_observation | 0.50 | 0.00 | 0.32 | 0.50 |
+| verify_no_reobserve | 0.46 | 0.76 | 0.48 | 0.46 |
+| **verify** | **0.84** | **0.76** | **1.00** | **0.76** |
 
 ### Findings
 
@@ -95,7 +95,7 @@ For every run:
    On `noisy`, `verify` reaches 1.00 task success vs. 0.48 for the best non-trivial baseline. It correctly rejects the spurious move by voting across multiple samples rather than trusting any single observation.
 
 2. **Verification is Pareto-optimal.**
-   Across all four scenarios, `verify` is never beaten by any baseline: it wins on `moved` (0.78 vs 0.62), `multi_change` (0.78 vs 0.62), and `noisy` (1.00 vs 0.48), and ties the best ablation on `disappeared` (0.76).
+   Across all four scenarios, `verify` is never beaten by any baseline: it wins on `moved` (0.84 vs 0.60), `noisy` (1.00 vs 0.48), and `multi_change` (0.76 vs 0.60), and ties the best ablation on `disappeared` (0.76).
 
 3. **The cost is bounded.**
    Verification uses ~4–6 additional observations per episode — a small, bounded overhead for protection against false observations.
@@ -119,10 +119,10 @@ Removing multi-sample re-observation from the full pipeline:
 
 | Scenario | verify | verify_no_reobserve |
 |---|---|---|
-| moved | 0.78 | 0.48 |
+| moved | 0.84 | 0.46 |
 | disappeared | 0.76 | 0.76 |
 | **noisy** | **1.00** | **0.48** |
-| multi_change | 0.78 | 0.48 |
+| multi_change | 0.76 | 0.46 |
 
 Re-observation is the mechanism that provides robustness to false observations.
 
@@ -138,13 +138,65 @@ Results at correlation strength 0.9:
 |---|---|---|---|---|
 | trust_memory | 0.00 | 0.00 | 1.00 | 0.00 |
 | trust_observation | 0.83 | 0.87 | 0.13 | 0.83 |
-| gated_observation | 0.87 | 0.00 | 0.13 | 0.87 |
+| gated_observation | 0.83 | 0.00 | 0.13 | 0.83 |
 | verify_no_reobserve | 0.53 | **0.93** | 0.33 | 0.53 |
-| **verify** | **0.90** | 0.77 | **1.00** | **0.87** |
+| **verify** | **0.90** | 0.77 | **1.00** | **0.90** |
 
 **Finding:** Multi-sample voting retains its advantage on the `noisy` scenario under high correlation (1.00 vs 0.33), but **loses its advantage on the `disappeared` scenario** (0.77 vs 0.93 for `verify_no_reobserve`). This failure mode reproduces across both experiments. Temporally correlated noise breaks the independence assumption behind voting — when the detector enters a sustained error state, consecutive samples share the same false signal. This motivates adaptive verification that detects correlation and adjusts its strategy.
 
 ![Correlated sensitivity](results/figures/correlated_sensitivity.png)
+
+---
+
+### Language Grounding
+
+A language layer extends the agent with natural-language command execution
+(`src/rsm/language/`). Commands like *"go to the red mug"* are parsed with
+spaCy, matched against verified spatial memory, and grounded to a specific
+object via CLIP (ViT-B/32).
+
+Pipeline:
+
+```
+"Go to the red mug"
+       ↓
+  spaCy parser           → {action: navigate, object_type: Mug, color: red}
+       ↓
+  Memory retrieval       → candidates from verified spatial memory
+       ↓
+  CLIP grounding         → text-image similarity on rendered crops
+       ↓
+  Navigate + scan        → move to remembered location, scan 360°
+```
+
+Ablation (11 commands × 3 scenarios × 10 seeds × 4 policies = 1,320 runs):
+
+| Policy | Grounding | End-to-End |
+|---|---|---|
+| **full** | **0.98** | **0.98** |
+| no_verification | 0.98 | 0.98 |
+| no_clip | 0.82 | 0.82 |
+| no_memory | 0.67 | 0.67 |
+
+**Findings:**
+
+1. **CLIP grounding is essential.** Removing image-text similarity drops
+   grounding accuracy from 0.98 to 0.82 — CLIP disambiguates objects that
+   share a base type (`Mug` vs `RedMug`) in a way that pure type-matching
+   cannot.
+
+2. **Spatial memory is essential.** Removing memory drops grounding
+   accuracy to 0.67 — without memory, the agent cannot retrieve candidates
+   for commands whose targets are outside the current field of view.
+
+3. **The verification layer does not transfer to short-horizon tasks.**
+   `full` and `no_verification` produce identical results because the
+   language task generates short, localized observations and the verifier
+   (designed for long exploration in the main experiments) rarely fires
+   meaningful updates. Extending memory verification to command-driven
+   tasks is a natural direction for future work.
+
+![Language results](results/figures/language_results.png)
 
 ---
 
@@ -183,23 +235,29 @@ spatial-memory-agent/
 │   │   ├── summary_bars.png
 │   │   ├── ablation.png
 │   │   ├── correlated_sensitivity.png
+│   │   ├── language_results.png
 │   │   ├── mobilenet_view.png
 │   │   └── agent_view.png
 │   └── tables/
 │       ├── main_experiment.csv
 │       ├── main_experiment.md
 │       ├── correlated_results.csv
-│       └── correlated_results.md
+│       ├── correlated_results.md
+│       ├── language_results.csv
+│       └── language_results.md
 │
 ├── scripts/
-│   ├── run_demo.py                 # environment sanity check
-│   ├── run_memory_demo.py          # memory construction walkthrough
-│   ├── run_full_demo.py            # baseline vs verify, single scenario
-│   ├── run_visual_demo.py          # image → color detector → memory
-│   ├── run_mobilenet_demo.py       # image → MobileNet-SSD → memory
-│   ├── run_main_experiment.py      # main 4000-run experiment
+│   ├── run_demo.py                  # environment sanity check
+│   ├── run_memory_demo.py           # memory construction walkthrough
+│   ├── run_full_demo.py             # baseline vs verify, single scenario
+│   ├── run_visual_demo.py           # image → color detector → memory
+│   ├── run_mobilenet_demo.py        # image → MobileNet-SSD → memory
+│   ├── run_main_experiment.py       # main 4000-run experiment
 │   ├── run_correlated_experiment.py # correlated-noise experiment
-│   └── make_final_figures.py       # all figures
+│   ├── run_language_demo.py         # single-command language demo
+│   ├── run_language_experiment.py   # 4-policy language ablation
+│   ├── make_final_figures.py        # main figures
+│   └── make_language_figures.py     # language figure
 │
 ├── src/
 │   └── rsm/
@@ -211,11 +269,14 @@ spatial-memory-agent/
 │       ├── verification/           # conflict detector, verifier
 │       ├── agent/                  # navigator
 │       ├── tasks/                  # navigate task
-│       └── evaluation/             # scenarios, policies
+│       ├── evaluation/             # scenarios, policies
+│       └── language/               # parser, candidates, CLIP grounder,
+│                                   #   language agent, evaluation
 │
 └── tests/
     ├── __init__.py
-    └── test_memory.py
+    ├── test_memory.py
+    └── test_language.py
 ```
 
 ---
@@ -233,6 +294,7 @@ pip install -r requirements.txt
 ### Run everything in order
 
 ```bash
+# ---- Project 1: spatial memory ----
 # 1. Sanity check the environment
 python scripts/run_demo.py
 
@@ -245,17 +307,27 @@ python scripts/run_full_demo.py
 # 4. Image-based perception demo (color detector)
 python scripts/run_visual_demo.py
 
-# 4b. MobileNet-SSD demo (documents domain gap)
+# 5. MobileNet-SSD demo (documents domain gap)
 python scripts/run_mobilenet_demo.py
 
-# 5. Main experiment (~5-8 min, 4000 runs)
+# 6. Main experiment (~5-8 min, 4000 runs)
 python scripts/run_main_experiment.py
 
-# 5b. Correlated noise experiment (~4-6 min, 2400 runs)
+# 7. Correlated noise experiment (~4-6 min, 2400 runs)
 python scripts/run_correlated_experiment.py
 
-# 6. Regenerate all figures
+# 8. Regenerate all main figures
 python scripts/make_final_figures.py
+
+# ---- Project 2: language grounding ----
+# 9. Single-command demo (first run downloads CLIP)
+python scripts/run_language_demo.py
+
+# 10. Language grounding experiment (~3-5 min, 1320 runs)
+python scripts/run_language_experiment.py
+
+# 11. Language figure
+python scripts/make_language_figures.py
 ```
 
 ### Results files
@@ -281,9 +353,13 @@ pyyaml>=6.0
 matplotlib>=3.7
 pytest>=7.4
 opencv-python>=4.8
+sentence-transformers>=2.2
+spacy>=3.7
+Pillow>=9.0
 ```
 
-Python 3.10. No GPU required. Runs on a laptop.
+Python 3.10. No GPU required. Runs on a laptop. First run downloads the
+CLIP model (~150 MB) and spaCy model (~13 MB) to local caches.
 
 ---
 
@@ -295,6 +371,11 @@ Python 3.10. No GPU required. Runs on a laptop.
 - **Fixed verification budget.** N=5 samples per conflict; adaptive budgets are future work.
 - **Small state space.** Two rooms, eight objects. Scaling to realistic environments would require a scalable scene-graph backend.
 - **Pretrained detector domain gap.** A pretrained MobileNet-SSD detector was integrated via OpenCV DNN and loads/runs correctly, but produces zero detections on the synthetic top-down render. This illustrates the well-known domain gap between natural-image detectors and simplified scene representations. Fine-tuning on synthetic data is left as future work.
+- **Verification does not transfer to short-horizon tasks.** The multi-sample
+  verification policy is decisive in long exploration episodes but fires
+  rarely in the language task, where the agent observes short, localized
+  scenes. This is documented as a limitation and motivates adaptive
+  verification in future work.
 
 These constraints are deliberate — the goal is to isolate the memory-reliability problem, not to build a complete embodied AI system.
 
@@ -304,7 +385,6 @@ These constraints are deliberate — the goal is to isolate the memory-reliabili
 
 - **Adaptive verification.** Choose the number of re-observations based on estimated local noise and correlation.
 - **Learned confidence.** Replace heuristic decay and reinforcement with a model that predicts memory reliability from observation history.
-- **Language grounding.** Resolve natural-language commands ("go to the red mug") against verified spatial memory.
 - **Photorealistic simulation.** Port the memory and verification layers onto AI2-THOR or Habitat without changing their interfaces.
 - **Detector fine-tuning.** Fine-tune a pretrained detector on synthetic top-down renders to close the domain gap.
 

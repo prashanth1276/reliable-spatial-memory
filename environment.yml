@@ -13,4 +13,7 @@ dependencies:
   - matplotlib>=3.7
   - pytest>=7.4
   - pip:
-    - opencv-python>=4.8
+      - opencv-python>=4.8
+      - sentence-transformers>=2.2
+      - spacy>=3.7
+      - Pillow>=9.0

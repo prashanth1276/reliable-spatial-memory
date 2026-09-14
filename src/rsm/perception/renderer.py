@@ -9,13 +9,14 @@ from ..environment.grid_world import GridWorld, HEADINGS
 # ---- Object palette (RGB) — chosen to be maximally distinct ----
 OBJECT_COLORS = {
     "Table":       (139,  69,  19),    # brown
-    "Counter":     ( 80,  80,  80),    # dark gray
-    "Fridge":      ( 30, 144, 255),    # bright blue
-    "Sofa":        (139,   0,   0),    # dark red
-    "TV":          ( 10,  10,  10),    # near-black
-    "CoffeeTable": (255, 165,   0),    # orange
-    "Mug":         ( 50, 205,  50),    # lime green
-    "Apple":       (255,   0,   0),    # pure red
+    "Counter":     (105, 105, 105),
+    "Fridge":      (245, 245, 220),
+    "Sofa":        (139,   0,   0),
+    "TV":          ( 30,  30,  30),
+    "CoffeeTable": (210, 180, 140),
+    "Mug":         ( 65, 105, 225),    # blue
+    "RedMug":      (220,  20,  60),    # red
+    "Apple":       (255,   0,   0),
 }
 
 FLOOR_KITCHEN = (200, 200, 200)
