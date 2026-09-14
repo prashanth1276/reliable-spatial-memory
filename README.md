@@ -348,8 +348,6 @@ pytest tests/ -v
 
 ```
 numpy>=1.24,<2.0
-networkx>=3.0
-pyyaml>=6.0
 matplotlib>=3.7
 pytest>=7.4
 opencv-python>=4.8
