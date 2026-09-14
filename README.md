@@ -213,7 +213,7 @@ Ablation (11 commands × 3 scenarios × 10 seeds × 4 policies = 1,320 runs):
 ## Repository Structure
 
 ```
-spatial-memory-agent/
+reliable-spatial-memory/
 ├── README.md
 ├── LICENSE
 ├── .gitignore
